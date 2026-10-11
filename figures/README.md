@@ -65,3 +65,8 @@ PNG：3600 × 1440 像素，12 × 4.8 英寸，300 dpi。SVG：纯矢量，文�
 - `plasma_discharge.png` / `plasma_discharge.svg`：带两侧电极的完整放电图案。
 - 两组独立素材均为透明背景，PNG 为 2400 × 1200 像素、300 dpi，可叠加到其他图中。
 - `toc_figure.py`：完整代码，一次执行生成全部上述文件；原 `TOC_FeN4_COF` 文件名同步更新。
+
+
+## S 形渐变宽度箭头
+
+`curved_tapered_arrow.png/.svg` 沿参考图左侧的 S 形路径，从左上向右下延伸，并采用右侧图案的宽尾、细腰、加宽箭头端趋势和棕橙色渐变。透明背景，PNG 为 1920 × 1200 像素、300 dpi；SVG 由纯矢量多边形组成。完整代码为 `draw_curved_arrow.py`，以两段连续三次 Bézier 曲线和法向偏移构造轮廓。复现：`/workspace/sci-figures-venv/bin/python figures/draw_curved_arrow.py`。
