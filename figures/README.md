@@ -25,7 +25,7 @@
 
 ## 完整可复现代码
 
-`draw_toc.py` 是完整绘图脚本，输出均定位到脚本所在文件夹，不受调用目录影响。数据常量、颜色、绘图函数及布局均在此文件内。生成 PNG、SVG 和记录字体、尺寸及所用数据的 `TOC_metadata.json`。
+`toc_figure.py` 是完整绘图脚本；`draw_toc.py` 为兼容入口。完整脚本，输出均定位到脚本所在文件夹，不受调用目录影响。数据常量、颜色、绘图函数及布局均在此文件内。生成 PNG、SVG 和记录字体、尺寸及所用数据的 `TOC_metadata.json`。
 
 当前已经用户同意，使用 Liberation Sans 作为临时 Arial 字宽兼容替代。系统未安装 Arial，官方 Core Fonts 下载镜像返回访问拒绝。**本版不能标称已使用 Arial**。代码默认请求 Arial，字体不存在时明确报错，不会悄悄替换。
 
@@ -35,20 +35,33 @@
 cd /workspace/codex-sci-figures
 export MPLCONFIGDIR=/workspace/.cache/matplotlib
 export XDG_CACHE_HOME=/workspace/.cache
-/workspace/sci-figures-venv/bin/python figures/draw_toc.py --font 'Liberation Sans'
+/workspace/sci-figures-venv/bin/python figures/toc_figure.py --font 'Liberation Sans'
 ```
 
 在其他 Python 3.12 环境中：
 
 ```bash
 python -m pip install numpy==2.5.4 matplotlib==3.11.2
-python figures/draw_toc.py --font 'Liberation Sans'
+python figures/toc_figure.py --font 'Liberation Sans'
 ```
 
 需本机安装所指定字体。获得可合法使用的 Arial 常规及粗体字体文件后：
 
 ```bash
-python figures/draw_toc.py --font Arial --font-dir /path/to/arial-fonts
+python figures/toc_figure.py --font Arial --font-dir /path/to/arial-fonts
 ```
 
 PNG：3600 × 1440 像素，12 × 4.8 英寸，300 dpi。SVG：纯矢量，文字转为所选字体的字形路径，避免期刊电脑缺字体造成替换；源代码中的文字仍可编辑。SVG 本身不依赖 dpi。该比例采用常见期刊图文摘要的简洁学术示意风格；不同 ACS/Nature 子刊具体尺寸及 TOC 要求应在确定目标期刊后核对，当前不声称满足某一具体期刊模板。
+
+
+## 等离子体放电视觉升级
+
+已参考用户给出的紫色闪电视觉方向，将原来的单个闪电符号升级为两侧电极、紫色辉光和分叉放电细丝。TOC 中放电图案代表处理步骤；下方独立箭头表示材料改性，避免把等离子体处理与光催化光照混在一起。该图案是概念示意，并非实验反应器尺寸或结构的重建，也没有加入参考图片中的金属纳米颗粒。
+
+全部效果采用 Matplotlib 的透明椭圆与多层折线绘制，保留纯矢量 SVG；随机种子固定为 41，保证可复现。没有嵌入参考图片。当前沿用用户已接受的 Liberation Sans 字体。
+
+- `toc_figure.png` / `toc_figure.svg`：更新后的完整 TOC，300 dpi PNG。
+- `plasma_background.png` / `plasma_background.svg`：无电极、无文字的独立紫色闪电背景。
+- `plasma_discharge.png` / `plasma_discharge.svg`：带两侧电极的完整放电图案。
+- 两组独立素材均为透明背景，PNG 为 2400 × 1200 像素、300 dpi，可叠加到其他图中。
+- `toc_figure.py`：完整代码，一次执行生成全部上述文件；原 `TOC_FeN4_COF` 文件名同步更新。

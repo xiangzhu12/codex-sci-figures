@@ -17,5 +17,12 @@
   ],
   "svg_text": "glyph paths",
   "surface_pathway": "proposed schematic",
+  "plasma_style": "seeded branching vector discharge with translucent glow",
+  "plasma_assets": [
+    "plasma_background.png",
+    "plasma_background.svg",
+    "plasma_discharge.png",
+    "plasma_discharge.svg"
+  ],
   "font_file": "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"
 }

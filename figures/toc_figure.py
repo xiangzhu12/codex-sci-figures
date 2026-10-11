@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Vector TOC schematic for the uploaded FeN4–COF manuscript.
 
-Run: python figures/draw_toc.py --font 'Liberation Sans'
-For Arial: python figures/draw_toc.py --font Arial [--font-dir /path/to/fonts]
+Run: python figures/toc_figure.py --font 'Liberation Sans'
+For Arial: python figures/toc_figure.py --font Arial [--font-dir /path/to/fonts]
 Only matplotlib and numpy are required. No source images are embedded.
 All molecular drawings are schematic, not atomistic geometry models.
 """
@@ -14,7 +14,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import font_manager as fm
-from matplotlib.patches import Circle, Polygon, FancyArrowPatch, FancyBboxPatch
+from matplotlib.patches import Circle, Polygon, FancyArrowPatch, FancyBboxPatch, Ellipse
 
 OUT = Path(__file__).resolve().parent
 C = dict(ink='#243447', grey='#687887', blue='#307EA3', pale='#EFF6FA',
@@ -162,6 +162,104 @@ def molecule(ax, x, y, co2=True):
         text(ax, *p, label, 10, 'white', 'bold', zorder=5)
 
 
+def lightning_path(a, b, rng, roughness=.12, levels=5):
+    """Seeded midpoint displacement; true vector polylines, no image filter."""
+    pts = np.array([a, b], dtype=float)
+    for depth in range(levels):
+        result = [pts[0]]
+        for p, q in zip(pts[:-1], pts[1:]):
+            d = q - p
+            normal = np.array([-d[1], d[0]])
+            normal /= max(np.linalg.norm(normal), 1e-9)
+            offset = rng.normal(0, roughness / (2 ** (.72 * depth)))
+            result.extend([(p + q) / 2 + offset * normal, q])
+        pts = np.array(result)
+    return pts
+
+
+def plasma(ax, center, width, height, electrodes=True, seed=41):
+    """Purple DBD discharge illustration with branching luminous filaments.
+
+    This is a conceptual plasma icon, not a reconstruction of the apparatus.
+    Transparent ellipses and nested line strokes remain editable SVG vectors.
+    No metal particles are introduced into the COF scientific story.
+    """
+    rng = np.random.default_rng(seed)
+    cx, cy = center
+    scale = min(width, height)
+    # Smooth visual glow built from translucent nested vector ellipses.
+    for i in range(30):
+        f = 1 - .69 * i / 29
+        ax.add_patch(Ellipse((cx, cy), width * f, height * f,
+                            fc='#9E42DD', ec='none', alpha=.028, zorder=1))
+    for _ in range(17):
+        px = cx + rng.uniform(-.30, .30) * width
+        py = cy + rng.uniform(-.32, .32) * height
+        ax.add_patch(Ellipse((px, py), width * .25, height * .22,
+                            angle=rng.uniform(-35, 35), fc='#CF78F1',
+                            ec='none', alpha=.07, zorder=1.1))
+
+    def filament(points, strength=1.):
+        for lw, color, alpha in ((6.4, '#7D29BA', .09),
+                                 (3.3, '#B747EC', .19),
+                                 (1.45, '#ECA4FF', .70),
+                                 (.55, '#FFFFFF', .97)):
+            ax.plot(points[:, 0], points[:, 1], lw=lw * strength,
+                    color=color, alpha=alpha, solid_capstyle='round',
+                    solid_joinstyle='round', zorder=2)
+
+    # Filaments originate at opposing electrode edges and branch inward.
+    for side in (-1, 1):
+        for j in range(6):
+            a = np.array([cx + side * width * .39,
+                          cy + height * (.13 * (j - 2.5))])
+            b = np.array([cx + rng.uniform(-.11, .11) * width,
+                          cy + rng.uniform(-.28, .28) * height])
+            pts = lightning_path(a, b, rng, roughness=scale * .073)
+            filament(pts)
+            k = int(rng.integers(8, len(pts) - 4))
+            endpoint = pts[k] + np.array([rng.uniform(-.18, .18) * width,
+                                         rng.choice([-1, 1]) * height * .16])
+            branch = lightning_path(pts[k], endpoint, rng,
+                                    roughness=scale * .035, levels=3)
+            filament(branch, .62)
+    # Small ionization glints contribute detail without photographic rasters.
+    for _ in range(20):
+        x = cx + rng.uniform(-.33, .33) * width
+        y = cy + rng.uniform(-.31, .31) * height
+        r = scale * rng.uniform(.003, .009)
+        ax.add_patch(Circle((x, y), r, fc='white', ec='none', alpha=.8, zorder=2.1))
+    if electrodes:
+        for side in (-1, 1):
+            x = cx + side * width * .45
+            # Stacked rectangles suggest a metallic electrode without raster shading.
+            ax.add_patch(FancyBboxPatch((x - width * .060, cy - height * .23),
+                                       width * .12, height * .46,
+                                       boxstyle=f'round,pad=0,rounding_size={scale * .025}',
+                                       fc='#292737', ec='#5D556D', lw=.8, zorder=3))
+            for j in range(12):
+                yy = cy - height * .205 + height * .41 * j / 12
+                line(ax, (x - width * .048, yy),
+                     (x + width * .048, yy), '#97909F', .8,
+                     alpha=.12 + .24 * np.sin(np.pi * j / 12), zorder=3.1)
+            lip = x - side * width * .054
+            line(ax, (lip, cy - height * .21), (lip, cy + height * .21),
+                 '#E777E8', 2.2, zorder=3.2)
+            line(ax, (lip, cy - height * .17), (lip, cy + height * .17),
+                 '#FFE9FF', .6, zorder=3.3)
+
+
+def export_plasma_assets():
+    for name, electrodes in (('plasma_background', False), ('plasma_discharge', True)):
+        fig = plt.figure(figsize=(8, 4), facecolor='none')
+        ax = fig.add_axes([0, 0, 1, 1], xlim=(0, 8), ylim=(0, 4))
+        ax.set_aspect('equal'); ax.axis('off')
+        plasma(ax, (4, 2), 7.2, 3.65, electrodes=electrodes)
+        for ext in ('png', 'svg'):
+            fig.savefig(OUT / f'{name}.{ext}', dpi=300, transparent=True)
+        plt.close(fig)
+
+
 def build(font):
     plt.rcParams.update({'font.family': font, 'font.size': 11,
                          'svg.fonttype': 'path', 'pdf.fonttype': 42,
@@ -178,12 +276,10 @@ def build(font):
          17, C['ink'], 'bold')
     cof(ax)
     # Plasma treatment is separate from the light-driven catalytic operation.
-    arrow(ax, (3.47, 2.91), (4.72, 2.91), C['purple'], 2.7, 19)
-    text(ax, 4.10, 3.42, 'DBD plasma', 11, C['purple'], 'bold')
-    bolt = np.array([[4.13, 3.24], [3.99, 3.06], [4.12, 3.09],
-                     [4.02, 2.87], [4.25, 3.13], [4.12, 3.12]])
-    ax.add_patch(Polygon(bolt, fc=C['purple'], ec='none'))
-    text(ax, 4.10, 2.47, 'Local distortion', 9.6, C['purple'])
+    text(ax, 4.10, 4.00, 'DBD plasma', 11, C['purple'], 'bold')
+    plasma(ax, (4.10, 3.24), 1.13, 1.21)
+    arrow(ax, (3.49, 2.36), (4.72, 2.36), C['purple'], 2.4, 18)
+    text(ax, 4.10, 2.06, 'Local distortion', 9.6, C['purple'])
     # Expanded site: four N donors remain; two unequal Fe–N bond sets.
     center = (6.13, 2.83)
     ax.add_patch(Circle(center, 1.28, fc=C['lilac'], ec='none', zorder=0))
@@ -246,11 +342,18 @@ def build(font):
                               'Description': 'Schematic based on the uploaded manuscript; surface pathway proposed.'}
                     if ext == 'svg' else None)
     plt.close(fig)
+    export_plasma_assets()
+    # Keep the earlier filenames synchronized for existing download links.
+    for ext in ('png', 'svg'):
+        (OUT / f'TOC_FeN4_COF.{ext}').write_bytes((OUT / f'toc_figure.{ext}').read_bytes())
     return {'font': font, 'png_pixels': [3600, 1440], 'dpi': 300,
             'co_rate_umol_g_h': RATE, 'co_selectivity_percent': SELECTIVITY,
             'fe_n_distances_A': [FE_N_SHORT, FE_N_LONG],
             'slow_TA_decay_ps': [TA_BEFORE, TA_AFTER],
-            'svg_text': 'glyph paths', 'surface_pathway': 'proposed schematic'}
+            'svg_text': 'glyph paths', 'surface_pathway': 'proposed schematic',
+            'plasma_style': 'seeded branching vector discharge with translucent glow',
+            'plasma_assets': ['plasma_background.png', 'plasma_background.svg',
+                              'plasma_discharge.png', 'plasma_discharge.svg']}
 
 
 def main():
