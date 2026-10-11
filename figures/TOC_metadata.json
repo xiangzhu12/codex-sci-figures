@@ -1,0 +1,21 @@
+{
+  "font": "Liberation Sans",
+  "png_pixels": [
+    3600,
+    1440
+  ],
+  "dpi": 300,
+  "co_rate_umol_g_h": 77.33,
+  "co_selectivity_percent": 90,
+  "fe_n_distances_A": [
+    1.939,
+    2.035
+  ],
+  "slow_TA_decay_ps": [
+    52.71,
+    849.2
+  ],
+  "svg_text": "glyph paths",
+  "surface_pathway": "proposed schematic",
+  "font_file": "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"
+}
